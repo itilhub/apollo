@@ -26,12 +26,16 @@ import java.util.Map;
 
 
 /**
+ * NamespaceUnlock 切面
  * unlock namespace if is redo operation.
  * --------------------------------------------
  * For example: If namespace has a item K1 = v1
  * --------------------------------------------
  * First operate: change k1 = v2 (lock namespace)
  * Second operate: change k1 = v1 (unlock namespace)
+ *
+ * @Aspect 注解，标记为表面类。
+ * @After 注解，标记切入执行方法后。
  */
 @Aspect
 @Component
@@ -90,28 +94,47 @@ public class NamespaceUnlockAspect {
     tryUnlock(namespaceService.findOne(item.getNamespaceId()));
   }
 
+  /**
+   * 尝试解锁
+   * @param namespace
+   */
   private void tryUnlock(Namespace namespace) {
+    // 判断是否开启配置
     if (bizConfig.isNamespaceLockSwitchOff()) {
       return;
     }
 
+    // 判断是否被修改
     if (!isModified(namespace)) {
       namespaceLockService.unlock(namespace.getId());
     }
 
   }
 
+  /**
+   * 是否被修改
+   * true 已被修改
+   * false 未被修改
+   * @param namespace
+   * @return
+   */
   boolean isModified(Namespace namespace) {
+    // 获得当前 Namespace 的最后有效的 Release 对象
     Release release = releaseService.findLatestActiveRelease(namespace);
+    // 获得当前 Namespace 的 Item 集合
     List<Item> items = itemService.findItemsWithoutOrdered(namespace.getId());
 
+    // 如果无 Release 对象，判断是否有普通的 Item 配置项。若有，则代表修改过。
     if (release == null) {
       return hasNormalItems(items);
     }
 
+    // 获得 Release 的配置 Map
     Map<String, String> releasedConfiguration = gson.fromJson(release.getConfigurations(), GsonType.CONFIG);
+    // 获得当前 Namespace 的配置 Map
     Map<String, String> configurationFromItems = generateConfigurationFromItems(namespace, items);
 
+    // 对比两个 配置 Map ，判断是否相等
     MapDifference<String, String> difference = Maps.difference(releasedConfiguration, configurationFromItems);
 
     return !difference.areEqual();
