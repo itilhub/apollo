@@ -33,6 +33,9 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 
+/**
+ * AdminService API 封装类
+ */
 @Service
 public class AdminServiceAPI {
 

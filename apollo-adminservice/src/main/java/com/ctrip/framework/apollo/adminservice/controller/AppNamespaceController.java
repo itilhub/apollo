@@ -34,18 +34,27 @@ public class AppNamespaceController {
     this.namespaceService = namespaceService;
   }
 
+  /**
+   * 创建 appNamespace
+   * @param appNamespace
+   * @param silentCreation
+   * @return
+   */
   @PostMapping("/apps/{appId}/appnamespaces")
   public AppNamespaceDTO create(@RequestBody AppNamespaceDTO appNamespace,
                                 @RequestParam(defaultValue = "false") boolean silentCreation) {
-
+    // 领域模型转换
     AppNamespace entity = BeanUtils.transform(AppNamespace.class, appNamespace);
+    // 幂等性校验 当前App是否已经创建过此appnamespace
     AppNamespace managedEntity = appNamespaceService.findOne(entity.getAppId(), entity.getName());
 
     if (managedEntity == null) {
+      // 缺省默认值填充
       if (StringUtils.isEmpty(entity.getFormat())){
         entity.setFormat(ConfigFileFormat.Properties.getValue());
       }
 
+      // 创建 AppNamespace
       entity = appNamespaceService.createAppNamespace(entity);
     } else if (silentCreation) {
       appNamespaceService.createNamespaceForAppNamespaceInAllCluster(appNamespace.getAppId(), appNamespace.getName(),

@@ -121,19 +121,28 @@ public class NamespaceController {
     return namespaceService.findPublicNamespaceForAssociatedNamespace(Env.valueOf(env), appId, clusterName, namespaceName);
   }
 
+  /**
+   * 创建 Namespace，支持多个Namespaces创建
+   * @param appId
+   * @param models
+   * @return
+   */
   @PreAuthorize(value = "@permissionValidator.hasCreateNamespacePermission(#appId)")
   @PostMapping("/apps/{appId}/namespaces")
   public ResponseEntity<Void> createNamespace(@PathVariable String appId,
                                               @RequestBody List<NamespaceCreationModel> models) {
 
+    // 参数校验
     checkModel(!CollectionUtils.isEmpty(models));
 
+    // 初始化 Namespace 的 Role 们
     String namespaceName = models.get(0).getNamespace().getNamespaceName();
     String operator = userInfoHolder.getUser().getUserId();
 
     roleInitializationService.initNamespaceRoles(appId, namespaceName, operator);
     roleInitializationService.initNamespaceEnvRoles(appId, namespaceName, operator);
 
+    // 循环 `models` ，创建 Namespace 对象
     for (NamespaceCreationModel model : models) {
       NamespaceDTO namespace = model.getNamespace();
       RequestPrecondition.checkArgumentsNotEmpty(model.getEnv(), namespace.getAppId(),
@@ -149,6 +158,7 @@ public class NamespaceController {
       }
     }
 
+    // 授予 Namespace Role 给当前管理员
     namespaceService.assignNamespaceRoleToOperator(appId, namespaceName,userInfoHolder.getUser().getUserId());
 
     return ResponseEntity.ok().build();
@@ -187,23 +197,37 @@ public class NamespaceController {
     return BeanUtils.transform(AppNamespaceDTO.class, appNamespace);
   }
 
+  /**
+   * 创建App Namespace
+   * @param appId
+   * @param appendNamespacePrefix
+   * @param appNamespace
+   * @return
+   */
   @PreAuthorize(value = "@permissionValidator.hasCreateAppNamespacePermission(#appId, #appNamespace)")
   @PostMapping("/apps/{appId}/appnamespaces")
   public AppNamespace createAppNamespace(@PathVariable String appId,
       @RequestParam(defaultValue = "true") boolean appendNamespacePrefix,
       @Valid @RequestBody AppNamespace appNamespace) {
+    // Namespace name 格式校验
     if (!InputValidator.isValidAppNamespace(appNamespace.getName())) {
       throw new BadRequestException(String.format("Invalid Namespace format: %s",
           InputValidator.INVALID_CLUSTER_NAMESPACE_MESSAGE + " & " + InputValidator.INVALID_NAMESPACE_NAMESPACE_MESSAGE));
     }
 
+    // 保存 AppNamespace 对象到数据库
     AppNamespace createdAppNamespace = appNamespaceService.createAppNamespaceInLocal(appNamespace, appendNamespacePrefix);
 
+    // 赋予权限，若满足如下任一条件：
+    // 1. 公开类型的 AppNamespace 。
+    // 2. 私有类型的 AppNamespace ，并且允许 App 管理员创建私有类型的 AppNamespace 。// 赋予权限，若满足如下任一条件：
     if (portalConfig.canAppAdminCreatePrivateNamespace() || createdAppNamespace.isPublic()) {
+      // Namespace权限分配
       namespaceService.assignNamespaceRoleToOperator(appId, appNamespace.getName(),
           userInfoHolder.getUser().getUserId());
     }
 
+    // 发布AppNamespaceCreationEvent 创建事件
     publisher.publishEvent(new AppNamespaceCreationEvent(createdAppNamespace));
 
     return createdAppNamespace;

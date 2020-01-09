@@ -101,32 +101,44 @@ public class AppNamespaceService {
     return createAppNamespaceInLocal(appNamespace, true);
   }
 
+  /**
+   * 创建 AppNamespace 到 PortalDB 中
+   * @param appNamespace
+   * @param appendNamespacePrefix
+   * @return
+   */
   @Transactional
   public AppNamespace createAppNamespaceInLocal(AppNamespace appNamespace, boolean appendNamespacePrefix) {
     String appId = appNamespace.getAppId();
 
+    // 校验对应的 App 是否存在
     //add app org id as prefix
     App app = appService.load(appId);
     if (app == null) {
       throw new BadRequestException("App not exist. AppId = " + appId);
     }
 
+    // 拼接 appNamespaceName 格式
     StringBuilder appNamespaceName = new StringBuilder();
     //add prefix postfix
     appNamespaceName
+        // 公用类型，拼接组织编号
         .append(appNamespace.isPublic() && appendNamespacePrefix ? app.getOrgId() + "." : "")
         .append(appNamespace.getName())
         .append(appNamespace.formatAsEnum() == ConfigFileFormat.Properties ? "" : "." + appNamespace.getFormat());
     appNamespace.setName(appNamespaceName.toString());
 
+    // 设置 AppNamespace 的 `comment` 属性为空串，若为 null
     if (appNamespace.getComment() == null) {
       appNamespace.setComment("");
     }
 
+    // 校验 AppNamespace 的 `format` 是否合法
     if (!ConfigFileFormat.isValidFormat(appNamespace.getFormat())) {
      throw new BadRequestException("Invalid namespace format. format must be properties、json、yaml、yml、xml");
     }
 
+    // 设置数据修改人信息
     String operator = appNamespace.getDataChangeCreatedBy();
     if (StringUtils.isEmpty(operator)) {
       operator = userInfoHolder.getUser().getUserId();
@@ -135,10 +147,12 @@ public class AppNamespaceService {
 
     appNamespace.setDataChangeLastModifiedBy(operator);
 
+    // 公有的namespace，检查全局是否唯一
     // globally uniqueness check for public app namespace
     if (appNamespace.isPublic()) {
       checkAppNamespaceGlobalUniqueness(appNamespace);
     } else {
+      // 私有的 namespace，检查在该APP 下是否唯一
       // check private app namespace
       if (appNamespaceRepository.findByAppIdAndName(appNamespace.getAppId(), appNamespace.getName()) != null) {
         throw new BadRequestException("Private AppNamespace " + appNamespace.getName() + " already exists!");
@@ -147,9 +161,12 @@ public class AppNamespaceService {
       checkPublicAppNamespaceGlobalUniqueness(appNamespace);
     }
 
+    // 保存 AppNamespace 到 DB
     AppNamespace createdAppNamespace = appNamespaceRepository.save(appNamespace);
 
+    // 初始化 Namespace 角色
     roleInitializationService.initNamespaceRoles(appNamespace.getAppId(), appNamespace.getName(), operator);
+    // 初始化 Namespace 不同环境的角色
     roleInitializationService.initNamespaceEnvRoles(appNamespace.getAppId(), appNamespace.getName(), operator);
 
     return createdAppNamespace;

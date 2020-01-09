@@ -107,16 +107,24 @@ public class AppController {
     return appService.findByAppIds(appIds, page);
   }
 
+  /**
+   * Portal 创建 App
+   * @param appModel
+   * @return
+   */
   @PreAuthorize(value = "@permissionValidator.hasCreateApplicationPermission()")
   @PostMapping
   public App create(@Valid @RequestBody AppModel appModel) {
-
+    // 领域对象转换 AppModel 转换成 App 对象
     App app = transformToApp(appModel);
 
+    // 保存 App 对象到数据库
     App createdApp = appService.createAppInLocal(app);
 
+    // 发布 AppCreationEvent 创建事件
     publisher.publishEvent(new AppCreationEvent(createdApp));
 
+    // 授予 App 管理员的角色
     Set<String> admins = appModel.getAdmins();
     if (!CollectionUtils.isEmpty(admins)) {
       rolePermissionService
@@ -124,6 +132,7 @@ public class AppController {
               admins, userInfoHolder.getUser().getUserId());
     }
 
+    // 返回创建App结果
     return createdApp;
   }
 

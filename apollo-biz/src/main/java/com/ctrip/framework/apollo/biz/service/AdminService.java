@@ -35,14 +35,18 @@ public class AdminService {
   @Transactional
   public App createNewApp(App app) {
     String createBy = app.getDataChangeCreatedBy();
+    // 保存到DB
     App createdApp = appService.save(app);
 
     String appId = createdApp.getAppId();
 
+    // 为App创建默认的Namespace
     appNamespaceService.createDefaultAppNamespace(appId, createBy);
 
+    // 为App创建默认的集权
     clusterService.createDefaultCluster(appId, createBy);
 
+    // 创建 Cluster 的默认命名空间
     namespaceService.instanceOfAppNamespaces(appId, ConfigConsts.CLUSTER_NAME_DEFAULT, createBy);
 
     return app;

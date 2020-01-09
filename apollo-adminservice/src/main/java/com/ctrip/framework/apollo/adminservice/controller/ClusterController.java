@@ -27,22 +27,34 @@ public class ClusterController {
     this.clusterService = clusterService;
   }
 
+  /**
+   * clusters 创建到 ApolloConfigDB
+   * @param appId
+   * @param autoCreatePrivateNamespace
+   * @param dto
+   * @return
+   */
   @PostMapping("/apps/{appId}/clusters")
   public ClusterDTO create(@PathVariable("appId") String appId,
                            @RequestParam(value = "autoCreatePrivateNamespace", defaultValue = "true") boolean autoCreatePrivateNamespace,
                            @Valid @RequestBody ClusterDTO dto) {
+    // 领域模型转换
     Cluster entity = BeanUtils.transform(Cluster.class, dto);
+    // 存在性校验
     Cluster managedEntity = clusterService.findOne(appId, entity.getName());
     if (managedEntity != null) {
       throw new BadRequestException("cluster already exist.");
     }
 
+    // 保存 Cluster 对象，并创建其 Namespace
     if (autoCreatePrivateNamespace) {
       entity = clusterService.saveWithInstanceOfAppNamespaces(entity);
+    // 保存 Cluster 对象，不创建其 Namespace
     } else {
       entity = clusterService.saveWithoutInstanceOfAppNamespaces(entity);
     }
 
+    // 将保存的 Cluster 对象转换成 ClusterDTO
     return BeanUtils.transform(ClusterDTO.class, entity);
   }
 

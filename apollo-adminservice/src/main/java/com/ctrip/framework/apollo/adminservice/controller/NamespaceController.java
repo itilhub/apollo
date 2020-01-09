@@ -27,18 +27,29 @@ public class NamespaceController {
     this.namespaceService = namespaceService;
   }
 
+  /**
+   * 创建 namespaces
+   * @param appId
+   * @param clusterName
+   * @param dto
+   * @return
+   */
   @PostMapping("/apps/{appId}/clusters/{clusterName}/namespaces")
   public NamespaceDTO create(@PathVariable("appId") String appId,
                              @PathVariable("clusterName") String clusterName,
                              @Valid @RequestBody NamespaceDTO dto) {
+    // 领域模型 转换
     Namespace entity = BeanUtils.transform(Namespace.class, dto);
+    // 校验唯一性
     Namespace managedEntity = namespaceService.findOne(appId, clusterName, entity.getNamespaceName());
     if (managedEntity != null) {
       throw new BadRequestException("namespace already exist.");
     }
 
+    // 保存 Namespace 对象
     entity = namespaceService.save(entity);
 
+    // 领域模型转换
     return BeanUtils.transform(NamespaceDTO.class, entity);
   }
 

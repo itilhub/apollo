@@ -56,14 +56,23 @@ public class AppService {
     return appRepository.findByAppId(appId);
   }
 
+  /**
+   * App PO对象保存
+   * @param entity
+   * @return
+   */
   @Transactional
   public App save(App entity) {
+    // App Id 唯一性校验
     if (!isAppIdUnique(entity.getAppId())) {
       throw new ServiceException("appId not unique");
     }
+
+    // 数据保护防止App PO 对象已存在id
     entity.setId(0);//protection
     App app = appRepository.save(entity);
 
+    // 记录 Audit 到数据库中
     auditService.audit(App.class.getSimpleName(), app.getId(), Audit.OP.INSERT,
         app.getDataChangeCreatedBy());
 

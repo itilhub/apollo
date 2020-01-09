@@ -26,12 +26,22 @@ public class ClusterService {
     return clusterAPI.findClustersByApp(appId, env);
   }
 
+  /**
+   * 创建集权
+   * @param env
+   * @param cluster
+   * @return
+   */
   public ClusterDTO createCluster(Env env, ClusterDTO cluster) {
+    // appId、env、clusterName 唯一性校验
     if (!clusterAPI.isClusterUnique(cluster.getAppId(), env, cluster.getName())) {
       throw new BadRequestException(String.format("cluster %s already exists.", cluster.getName()));
     }
+
+    // 创建cluster 到 AdminService
     ClusterDTO clusterDTO = clusterAPI.create(env, cluster);
 
+    // Tracer 日志
     Tracer.logEvent(TracerEventType.CREATE_CLUSTER, cluster.getAppId(), "0", cluster.getName());
 
     return clusterDTO;

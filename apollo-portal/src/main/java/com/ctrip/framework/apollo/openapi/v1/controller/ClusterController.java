@@ -21,6 +21,9 @@ import com.ctrip.framework.apollo.openapi.util.OpenApiBeanUtils;
 import com.ctrip.framework.apollo.portal.service.ClusterService;
 import com.ctrip.framework.apollo.portal.spi.UserService;
 
+/**
+ * 集群控制器
+ */
 @RestController("openapiClusterController")
 @RequestMapping("/openapi/v1/envs/{env}")
 public class ClusterController {
@@ -41,11 +44,20 @@ public class ClusterController {
     return clusterDTO == null ? null : OpenApiBeanUtils.transformFromClusterDTO(clusterDTO);
   }
 
+  /**
+   * 创建集群
+   * @param appId
+   * @param env
+   * @param cluster
+   * @param request
+   * @return
+   */
   @PreAuthorize(value = "@consumerPermissionValidator.hasCreateClusterPermission(#request, #appId)")
   @PostMapping(value = "apps/{appId}/clusters")
   public OpenClusterDTO createCluster(@PathVariable String appId, @PathVariable String env,
       @Valid @RequestBody OpenClusterDTO cluster, HttpServletRequest request) {
 
+    // 校验 cluster对象AppId 与申请AppId是否相等
     if (!Objects.equals(appId, cluster.getAppId())) {
       throw new BadRequestException(String.format(
           "AppId not equal. AppId in path = %s, AppId in payload = %s", appId, cluster.getAppId()));
@@ -54,18 +66,22 @@ public class ClusterController {
     String clusterName = cluster.getName();
     String operator = cluster.getDataChangeCreatedBy();
 
+    // clusterName 和 operator 参数不为空校验
     RequestPrecondition.checkArguments(!StringUtils.isContainEmpty(clusterName, operator),
         "name and dataChangeCreatedBy should not be null or empty");
 
+    // 校验 集权名称 是否符合规范
     if (!InputValidator.isValidClusterNamespace(clusterName)) {
       throw new BadRequestException(
           String.format("Invalid ClusterName format: %s", InputValidator.INVALID_CLUSTER_NAMESPACE_MESSAGE));
     }
 
+    // 用户存在性校验
     if (userService.findByUserId(operator) == null) {
       throw new BadRequestException("User " + operator + " doesn't exist!");
     }
 
+    // 领域对象转换
     ClusterDTO toCreate = OpenApiBeanUtils.transformToClusterDTO(cluster);
     ClusterDTO createdClusterDTO = clusterService.createCluster(Env.fromString(env), toCreate);
 

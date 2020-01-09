@@ -25,12 +25,12 @@ public class LegacyMetaServerProvider implements MetaServerProvider {
     Properties prop = new Properties();
     prop = ResourceUtils.readConfigFile("apollo-env.properties", prop);
 
-    domains.put(Env.LOCAL, getMetaServerAddress(prop, "local_meta", "local.meta"));
+//    domains.put(Env.LOCAL, getMetaServerAddress(prop, "local_meta", "local.meta"));
     domains.put(Env.DEV, getMetaServerAddress(prop, "dev_meta", "dev.meta"));
-    domains.put(Env.FAT, getMetaServerAddress(prop, "fat_meta", "fat.meta"));
-    domains.put(Env.UAT, getMetaServerAddress(prop, "uat_meta", "uat.meta"));
-    domains.put(Env.LPT, getMetaServerAddress(prop, "lpt_meta", "lpt.meta"));
-    domains.put(Env.PRO, getMetaServerAddress(prop, "pro_meta", "pro.meta"));
+//    domains.put(Env.FAT, getMetaServerAddress(prop, "fat_meta", "fat.meta"));
+//    domains.put(Env.UAT, getMetaServerAddress(prop, "uat_meta", "uat.meta"));
+//    domains.put(Env.LPT, getMetaServerAddress(prop, "lpt_meta", "lpt.meta"));
+//    domains.put(Env.PRO, getMetaServerAddress(prop, "pro_meta", "pro.meta"));
   }
 
   private String getMetaServerAddress(Properties prop, String sourceName, String propName) {

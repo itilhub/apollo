@@ -85,11 +85,19 @@ public class AppNamespaceService {
     return appNamespaceRepository.findByAppIdAndNameIn(appId, namespaceNames);
   }
 
+  /**
+   * 创建默认的AppNamespace
+   * @param appId
+   * @param createBy
+   */
   @Transactional
   public void createDefaultAppNamespace(String appId, String createBy) {
+    // 校验默认AppNamespaceName在App下全局是否唯一
     if (!isAppNamespaceNameUnique(appId, ConfigConsts.NAMESPACE_APPLICATION)) {
       throw new ServiceException("appnamespace not unique");
     }
+
+    // 创建默认AppNamespace 到 DB中
     AppNamespace appNs = new AppNamespace();
     appNs.setAppId(appId);
     appNs.setName(ConfigConsts.NAMESPACE_APPLICATION);
@@ -103,20 +111,31 @@ public class AppNamespaceService {
                        createBy);
   }
 
+  /**
+   * 创建 AppNamespace
+   * @param appNamespace
+   * @return
+   */
   @Transactional
   public AppNamespace createAppNamespace(AppNamespace appNamespace) {
     String createBy = appNamespace.getDataChangeCreatedBy();
+
+    // 参数校验
     if (!isAppNamespaceNameUnique(appNamespace.getAppId(), appNamespace.getName())) {
       throw new ServiceException("appnamespace not unique");
     }
+    // 保护代码，避免 App 对象中，已经有 id 属性
     appNamespace.setId(0);//protection
     appNamespace.setDataChangeCreatedBy(createBy);
     appNamespace.setDataChangeLastModifiedBy(createBy);
 
+    // 保存到 DB 中
     appNamespace = appNamespaceRepository.save(appNamespace);
 
+    // 创建 AppNamespace 在 App 下，每个 Cluster 的 Namespace 对象
     createNamespaceForAppNamespaceInAllCluster(appNamespace.getAppId(), appNamespace.getName(), createBy);
 
+    // 记录 Audit 到数据库中
     auditService.audit(AppNamespace.class.getSimpleName(), appNamespace.getId(), Audit.OP.INSERT, createBy);
     return appNamespace;
   }

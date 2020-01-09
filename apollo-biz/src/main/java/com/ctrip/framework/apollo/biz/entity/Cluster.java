@@ -10,6 +10,7 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 
 /**
+ * cluster 实体
  * @author Jason Song(song_s@ctrip.com)
  */
 @Entity
@@ -18,12 +19,21 @@ import javax.persistence.Table;
 @Where(clause = "isDeleted = 0")
 public class Cluster extends BaseEntity implements Comparable<Cluster> {
 
+  /**
+   * 集权名称
+   */
   @Column(name = "Name", nullable = false)
   private String name;
 
+  /**
+   * App 唯一标识
+   */
   @Column(name = "AppId", nullable = false)
   private String appId;
 
+  /**
+   * 集群父级Id，用于灰度发布
+   */
   @Column(name = "ParentClusterId", nullable = false)
   private long parentClusterId;
 

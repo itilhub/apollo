@@ -22,6 +22,9 @@ import javax.validation.Valid;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * APP 相关控制层
+ */
 @RestController
 public class AppController {
 
@@ -33,16 +36,25 @@ public class AppController {
     this.adminService = adminService;
   }
 
+  /**
+   * 创建APP
+   * @param dto
+   * @return
+   */
   @PostMapping("/apps")
   public AppDTO create(@Valid @RequestBody AppDTO dto) {
+    // 领域模型转换 AppDTO 转换 App
     App entity = BeanUtils.transform(App.class, dto);
+    // 校验APP 是否存在
     App managedEntity = appService.findOne(entity.getAppId());
     if (managedEntity != null) {
       throw new BadRequestException("app already exist.");
     }
 
+    // 创建App
     entity = adminService.createNewApp(entity);
 
+    // 返回 领域模型转换 App 对象
     return BeanUtils.transform(AppDTO.class, entity);
   }
 

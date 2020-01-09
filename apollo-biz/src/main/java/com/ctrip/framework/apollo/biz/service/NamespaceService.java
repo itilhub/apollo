@@ -311,12 +311,21 @@ public class NamespaceService {
     return deleted;
   }
 
+  /**
+   * Namespace 创建
+   * @param entity
+   * @return
+   */
   @Transactional
   public Namespace save(Namespace entity) {
+    // 参数校验
     if (!isNamespaceUnique(entity.getAppId(), entity.getClusterName(), entity.getNamespaceName())) {
       throw new ServiceException("namespace not unique");
     }
+
+    // 代码保护
     entity.setId(0);//protection
+    // 保存到 DB 中
     Namespace namespace = namespaceRepository.save(entity);
 
     auditService.audit(Namespace.class.getSimpleName(), namespace.getId(), Audit.OP.INSERT,
@@ -338,11 +347,19 @@ public class NamespaceService {
     return managedNamespace;
   }
 
+  /**
+   * 实例化Namespaces
+   * @param appId
+   * @param clusterName
+   * @param createBy
+   */
   @Transactional
   public void instanceOfAppNamespaces(String appId, String clusterName, String createBy) {
 
+    // 获得所有的 AppNamespace 对象
     List<AppNamespace> appNamespaces = appNamespaceService.findByAppId(appId);
 
+    // 循环 AppNamespace 数组，创建并保存 Namespace 到数据库
     for (AppNamespace appNamespace : appNamespaces) {
       Namespace ns = new Namespace();
       ns.setAppId(appId);

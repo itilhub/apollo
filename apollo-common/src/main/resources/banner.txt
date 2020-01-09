@@ -4,5 +4,5 @@
   / ___ \| |_) | (_) | | | (_) |
  /_/   \_\ .__/ \___/|_|_|\___/
          |_|
-
+(common)
 :: Spring Boot :: ${spring-boot.formatted-version}

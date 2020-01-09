@@ -14,6 +14,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+/**
+ * 创建监听器
+ */
 @Component
 public class CreationListener {
 
@@ -32,10 +35,17 @@ public class CreationListener {
     this.namespaceAPI = namespaceAPI;
   }
 
+  /**
+   * 监听App 创建事件，向ApolloConfigDB 创建App
+   * @param event
+   */
   @EventListener
   public void onAppCreationEvent(AppCreationEvent event) {
+    // 领域模型转换
     AppDTO appDTO = BeanUtils.transform(AppDTO.class, event.getApp());
+    // 得到有效的环境
     List<Env> envs = portalSettings.getActiveEnvs();
+    // 循环创建该App 在不同环境下的数据
     for (Env env : envs) {
       try {
         appAPI.createApp(env, appDTO);
@@ -46,10 +56,18 @@ public class CreationListener {
     }
   }
 
+  /**
+   * 监听AppNamespace 创建事件，ApolloConfigDB 创建AppNamespace
+   * @param event
+   */
   @EventListener
   public void onAppNamespaceCreationEvent(AppNamespaceCreationEvent event) {
+    // 领域模型转换
     AppNamespaceDTO appNamespace = BeanUtils.transform(AppNamespaceDTO.class, event.getAppNamespace());
+    // 获得有效环境
     List<Env> envs = portalSettings.getActiveEnvs();
+
+    // 循环 所有环境，调用对应的 Admin Service 的 API ，创建 AppNamespace 对象
     for (Env env : envs) {
       try {
         namespaceAPI.createAppNamespace(env, appNamespace);

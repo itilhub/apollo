@@ -62,23 +62,38 @@ public class ClusterService {
     return clusters;
   }
 
+  /**
+   * 保存 Cluster 并创建 Namesspaces
+   * @param entity
+   * @return
+   */
   @Transactional
   public Cluster saveWithInstanceOfAppNamespaces(Cluster entity) {
 
+    // 保存 cluster
     Cluster savedCluster = saveWithoutInstanceOfAppNamespaces(entity);
 
+    // 创建 Cluster 的 Namespace
     namespaceService.instanceOfAppNamespaces(savedCluster.getAppId(), savedCluster.getName(),
                                              savedCluster.getDataChangeCreatedBy());
 
     return savedCluster;
   }
 
+  /**
+   * 保存 cluster
+   * @param entity
+   * @return
+   */
   @Transactional
   public Cluster saveWithoutInstanceOfAppNamespaces(Cluster entity) {
+    // 参数校验
     if (!isClusterNameUnique(entity.getAppId(), entity.getName())) {
       throw new BadRequestException("cluster not unique");
     }
+    // 保护
     entity.setId(0);//protection
+    // 保存Cluster
     Cluster cluster = clusterRepository.save(entity);
 
     auditService.audit(Cluster.class.getSimpleName(), cluster.getId(), Audit.OP.INSERT,

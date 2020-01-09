@@ -891,6 +891,8 @@
 				</plugins>
 			</build>
 		</profile>
+
+		<!--	flyway Maven执行 mvn -N -Pportaldb flyway:migrate	-->
 		<profile>
 			<id>configdb</id>
 			<build>
@@ -914,6 +916,8 @@
 				</plugins>
 			</build>
 		</profile>
+
+		<!--	flyway Maven执行 mvn -N -Pportaldb flyway:migrate	-->
 		<profile>
 			<id>portaldb</id>
 			<build>
