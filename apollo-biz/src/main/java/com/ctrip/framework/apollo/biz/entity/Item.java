@@ -10,25 +10,46 @@ import javax.persistence.Entity;
 import javax.persistence.Lob;
 import javax.persistence.Table;
 
+/**
+ * Item 配置项 实体类
+ * Item 是 Namespace 下最小颗粒度的单位
+ * 真针对于 properties 格式
+ *
+ */
 @Entity
 @Table(name = "Item")
 @SQLDelete(sql = "Update Item set isDeleted = 1 where id = ?")
 @Where(clause = "isDeleted = 0")
 public class Item extends BaseEntity {
 
+  /**
+   * namespace 编号
+   */
   @Column(name = "NamespaceId", nullable = false)
   private long namespaceId;
 
+  /**
+   * 键
+   */
   @Column(name = "key", nullable = false)
   private String key;
 
+  /**
+   * 值
+   */
   @Column(name = "value")
   @Lob
   private String value;
 
+  /**
+   * 注释
+   */
   @Column(name = "comment")
   private String comment;
 
+  /**
+   * 行号
+   */
   @Column(name = "LineNum")
   private Integer lineNum;
 

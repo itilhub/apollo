@@ -58,19 +58,31 @@ public class ItemController {
   public void modifyItemsByText(@PathVariable String appId, @PathVariable String env,
                                 @PathVariable String clusterName, @PathVariable String namespaceName,
                                 @RequestBody NamespaceTextModel model) {
+    // 设置 PathVariable 到 `model` 中
     model.setAppId(appId);
     model.setClusterName(clusterName);
     model.setEnv(env);
     model.setNamespaceName(namespaceName);
 
+    // 批量更新一个 Namespace 下的 Item 们
     configService.updateConfigItemByText(model);
   }
 
+  /**
+   * 创建 Item
+   * @param appId
+   * @param env
+   * @param clusterName
+   * @param namespaceName
+   * @param item
+   * @return
+   */
   @PreAuthorize(value = "@permissionValidator.hasModifyNamespacePermission(#appId, #namespaceName, #env)")
   @PostMapping("/apps/{appId}/envs/{env}/clusters/{clusterName}/namespaces/{namespaceName}/item")
   public ItemDTO createItem(@PathVariable String appId, @PathVariable String env,
                             @PathVariable String clusterName, @PathVariable String namespaceName,
                             @RequestBody ItemDTO item) {
+    // 校验参数
     checkModel(isValidItem(item));
 
     //protect
@@ -82,6 +94,7 @@ public class ItemController {
     item.setDataChangeCreatedTime(null);
     item.setDataChangeLastModifiedTime(null);
 
+    // 保存 Item 到 Admin Service
     return configService.createItem(appId, Env.valueOf(env), clusterName, namespaceName, item);
   }
 

@@ -44,18 +44,25 @@ public class ItemController {
   public ItemDTO create(@PathVariable("appId") String appId,
                         @PathVariable("clusterName") String clusterName,
                         @PathVariable("namespaceName") String namespaceName, @RequestBody ItemDTO dto) {
+    // 领域模型转换
     Item entity = BeanUtils.transform(Item.class, dto);
 
     ConfigChangeContentBuilder builder = new ConfigChangeContentBuilder();
+
+    // 校验Item 存在性
     Item managedEntity = itemService.findOne(appId, clusterName, namespaceName, entity.getKey());
     if (managedEntity != null) {
       throw new BadRequestException("item already exists");
     } else {
+      // 保存 Item
       entity = itemService.save(entity);
+      // 添加到 ConfigChangeContentBuilder 中
       builder.createItem(entity);
     }
+    // 领域模型转换
     dto = BeanUtils.transform(ItemDTO.class, entity);
 
+    // 保存 Commit 对象
     Commit commit = new Commit();
     commit.setAppId(appId);
     commit.setClusterName(clusterName);

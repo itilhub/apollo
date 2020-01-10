@@ -14,8 +14,17 @@ public class ConfigChangeContentBuilder {
 
   private static final Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 
+  /**
+   * 创建Item集合
+   */
   private List<Item> createItems = new LinkedList<>();
+  /**
+   * 更新Item集合
+   */
   private List<ItemPair> updateItems = new LinkedList<>();
+  /**
+   * 删除Item集合
+   */
   private List<Item> deleteItems = new LinkedList<>();
 
 
@@ -63,9 +72,14 @@ public class ConfigChangeContentBuilder {
     return gson.toJson(this);
   }
 
+  /**
+   * Updated Item 对象
+   */
   static class ItemPair {
 
+    // 旧的Item
     Item oldItem;
+    // 新的Item
     Item newItem;
 
     public ItemPair(Item oldItem, Item newItem) {
@@ -74,6 +88,12 @@ public class ConfigChangeContentBuilder {
     }
   }
 
+  /**
+   * Item PO 克隆 新得Item对象
+   * 原因是JPA得状态问题，因为是数据库对应对象，为了避免修改该对象造成数据库也同步更新
+   * @param source
+   * @return
+   */
   Item cloneItem(Item source) {
     Item target = new Item();
 
